@@ -6,10 +6,14 @@ ACTIVE_FILE="$APP_DIR/active_color"
 UPSTREAM_FILE="/etc/nginx/conf.d/mean-upstream.conf"
 
 compose() {
+  local sudo_cmd=()
+  if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
+    sudo_cmd=(sudo -E)
+  fi
   if command -v docker-compose >/dev/null 2>&1; then
-    sudo -E docker-compose "$@"
+    "${sudo_cmd[@]}" docker-compose "$@"
   else
-    sudo -E docker compose "$@"
+    "${sudo_cmd[@]}" docker compose "$@"
   fi
 }
 
@@ -65,12 +69,12 @@ ensure_mongo
 
 COLOR="$(next_color)"
 read -r FRONTEND_PORT BACKEND_PORT < <(ports_for "$COLOR")
+export FRONTEND_PORT BACKEND_PORT
 
 echo "Deploying color: $COLOR (frontend=$FRONTEND_PORT backend=$BACKEND_PORT)"
 
 compose -f "$APP_DIR/docker-compose.app.yml" -p "mean-${COLOR}" pull
-FRONTEND_PORT="$FRONTEND_PORT" BACKEND_PORT="$BACKEND_PORT" \
-  compose -f "$APP_DIR/docker-compose.app.yml" -p "mean-${COLOR}" up -d
+compose -f "$APP_DIR/docker-compose.app.yml" -p "mean-${COLOR}" up -d
 
 update_nginx "$FRONTEND_PORT" "$BACKEND_PORT"
 
