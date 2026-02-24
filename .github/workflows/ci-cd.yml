@@ -47,6 +47,4 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             set -e
-            cd /home/ubuntu/mean-devOps-Deployment
-            docker compose pull
-            docker compose up -d
+            bash /opt/mean/deploy.sh

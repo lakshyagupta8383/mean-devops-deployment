@@ -57,23 +57,19 @@ sudo usermod -aG docker $USER
 ```
 Log out and back in to refresh group membership.
 
-Clone repo on EC2:
-```bash
-git clone <YOUR_GITHUB_REPO_URL> /home/ubuntu/mean-devOps-Deployment
-cd /home/ubuntu/mean-devOps-Deployment
-```
-
-Run containers:
-```bash
-docker compose pull
-docker compose up -d
-```
+For blue/green, copy the deployment files to `/opt/mean` on EC2:
+- `docker-compose.app.yml`
+- `docker-compose.mongo.yml`
+- `deploy.sh`
+- `deploy/nginx.conf` (rename to `/opt/mean/nginx.conf`)
+- `deploy/mean-upstream.conf` (rename to `/opt/mean/mean-upstream.conf`)
 
 ## Nginx Reverse Proxy (Host-Level)
 Use the provided config to expose the app on port 80 (subdomain):
 ```bash
-sudo cp /home/ubuntu/mean-devOps-Deployment/deploy/nginx.conf /etc/nginx/sites-available/mean-app
+sudo cp /opt/mean/nginx.conf /etc/nginx/sites-available/mean-app
 sudo ln -s /etc/nginx/sites-available/mean-app /etc/nginx/sites-enabled/mean-app
+sudo cp /opt/mean/mean-upstream.conf /etc/nginx/conf.d/mean-upstream.conf
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t
 sudo systemctl restart nginx
@@ -94,7 +90,14 @@ Workflow file: `.github/workflows/ci-cd.yml`
 
 ### What the pipeline does
 1. Builds and pushes Docker images on every push to `main`.
-2. SSHs to EC2, pulls latest images, and restarts containers.
+2. SSHs to EC2 and runs `/opt/mean/deploy.sh` (blue/green).
+
+## Blue/Green Deployment
+The deploy script alternates between blue and green stacks:
+- Blue: frontend `4200`, backend `8080`
+- Green: frontend `4201`, backend `8081`
+
+Nginx reads `/etc/nginx/conf.d/mean-upstream.conf` to decide which stack is active.
 
 ## Screenshots (Required by Task)
 Add screenshots under `docs/screenshots/` and update this list:
