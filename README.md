@@ -52,7 +52,11 @@ Images built by CI:
 Install Docker, Compose, and Nginx:
 ```bash
 sudo apt update
-sudo apt install -y docker.io docker-compose nginx
+sudo apt install -y docker.io nginx
+# Ubuntu 24.04 (noble) package for Compose v2 plugin:
+sudo apt install -y docker-compose-v2
+# Optional fallback if v2 plugin is unavailable:
+# sudo apt install -y docker-compose
 sudo usermod -aG docker $USER
 ```
 Log out and back in to refresh group membership.
@@ -98,7 +102,27 @@ The deploy script alternates between blue and green stacks:
 - Blue: frontend `4200`, backend `8080`
 - Green: frontend `4201`, backend `8081`
 
-Nginx reads `/etc/nginx/conf.d/mean-upstream.conf` to decide which stack is active.
+Nginx reads `/etc/nginx/snippets/mean-upstream.conf` to decide which stack is active.
+
+The active color is tracked in `/opt/mean/active_color`.
+`deploy.sh` updates this file and switches Nginx upstreams automatically.
+
+## Troubleshooting
+- `docker compose: unknown command` on EC2:
+```bash
+sudo apt update
+sudo apt install -y docker-compose-v2
+```
+- `404 Not Found` from Nginx:
+1. Ensure the correct site is enabled:
+```bash
+sudo cp /opt/mean/nginx.conf /etc/nginx/sites-available/mean-app
+sudo ln -sf /etc/nginx/sites-available/mean-app /etc/nginx/sites-enabled/mean-app
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl reload nginx
+```
+2. Open the configured host exactly:
+`http://mean.54.197.150.178.sslip.io/`
 
 ## Screenshots (Required by Task)
 Add screenshots under `docs/screenshots/` and update this list:
