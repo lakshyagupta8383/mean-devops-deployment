@@ -4,16 +4,23 @@ set -euo pipefail
 APP_DIR="/opt/mean"
 ACTIVE_FILE="$APP_DIR/active_color"
 UPSTREAM_FILE="/etc/nginx/snippets/mean-upstream.conf"
+COMPOSE_V1=0
 
 compose() {
   local sudo_cmd=()
   if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
     sudo_cmd=(sudo -E)
   fi
-  if command -v docker-compose >/dev/null 2>&1; then
+  # Prefer Compose v2; docker-compose v1 can fail with newer Docker metadata
+  if "${sudo_cmd[@]}" docker compose version >/dev/null 2>&1; then
+    COMPOSE_V1=0
+    "${sudo_cmd[@]}" docker compose "$@"
+  elif command -v docker-compose >/dev/null 2>&1; then
+    COMPOSE_V1=1
     "${sudo_cmd[@]}" docker-compose "$@"
   else
-    "${sudo_cmd[@]}" docker compose "$@"
+    echo "ERROR: Docker Compose is not available (need docker compose plugin or docker-compose)." >&2
+    exit 1
   fi
 }
 
@@ -73,6 +80,11 @@ read -r FRONTEND_PORT BACKEND_PORT < <(ports_for "$COLOR")
 echo "Deploying color: $COLOR (frontend=$FRONTEND_PORT backend=$BACKEND_PORT)"
 
 compose -f "$APP_DIR/docker-compose.app.${COLOR}.yml" -p "mean-${COLOR}" pull
+# docker-compose v1 can fail while recreating existing containers
+# with newer Docker/image metadata; clean the inactive color first.
+if [[ "$COMPOSE_V1" -eq 1 ]]; then
+  compose -f "$APP_DIR/docker-compose.app.${COLOR}.yml" -p "mean-${COLOR}" down --remove-orphans || true
+fi
 compose -f "$APP_DIR/docker-compose.app.${COLOR}.yml" -p "mean-${COLOR}" up -d
 
 update_nginx "$FRONTEND_PORT" "$BACKEND_PORT"
