@@ -28,8 +28,8 @@ ensure_mongo() {
 }
 
 current_color() {
-  if [[ -f "$ACTIVE_FILE" ]]; then
-    cat "$ACTIVE_FILE"
+  if sudo test -f "$ACTIVE_FILE"; then
+    sudo cat "$ACTIVE_FILE"
   else
     echo "blue"
   fi
@@ -77,7 +77,7 @@ compose -f "$APP_DIR/docker-compose.app.${COLOR}.yml" -p "mean-${COLOR}" up -d
 
 update_nginx "$FRONTEND_PORT" "$BACKEND_PORT"
 
-echo "$COLOR" > "$ACTIVE_FILE"
+echo "$COLOR" | sudo tee "$ACTIVE_FILE" >/dev/null
 
 # Optional cleanup (uncomment if you want to reclaim space)
 # docker image prune -f
