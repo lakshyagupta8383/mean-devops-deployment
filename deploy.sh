@@ -3,7 +3,7 @@ set -euo pipefail
 
 APP_DIR="/opt/mean"
 ACTIVE_FILE="$APP_DIR/active_color"
-UPSTREAM_FILE="/etc/nginx/conf.d/mean-upstream.conf"
+UPSTREAM_FILE="/etc/nginx/snippets/mean-upstream.conf"
 
 compose() {
   local sudo_cmd=()
@@ -69,12 +69,11 @@ ensure_mongo
 
 COLOR="$(next_color)"
 read -r FRONTEND_PORT BACKEND_PORT < <(ports_for "$COLOR")
-export FRONTEND_PORT BACKEND_PORT
 
 echo "Deploying color: $COLOR (frontend=$FRONTEND_PORT backend=$BACKEND_PORT)"
 
-compose -f "$APP_DIR/docker-compose.app.yml" -p "mean-${COLOR}" pull
-compose -f "$APP_DIR/docker-compose.app.yml" -p "mean-${COLOR}" up -d
+compose -f "$APP_DIR/docker-compose.app.${COLOR}.yml" -p "mean-${COLOR}" pull
+compose -f "$APP_DIR/docker-compose.app.${COLOR}.yml" -p "mean-${COLOR}" up -d
 
 update_nginx "$FRONTEND_PORT" "$BACKEND_PORT"
 

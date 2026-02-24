@@ -58,7 +58,8 @@ sudo usermod -aG docker $USER
 Log out and back in to refresh group membership.
 
 For blue/green, copy the deployment files to `/opt/mean` on EC2:
-- `docker-compose.app.yml`
+- `docker-compose.app.blue.yml`
+- `docker-compose.app.green.yml`
 - `docker-compose.mongo.yml`
 - `deploy.sh`
 - `deploy/nginx.conf` (rename to `/opt/mean/nginx.conf`)
@@ -69,7 +70,7 @@ Use the provided config to expose the app on port 80 (subdomain):
 ```bash
 sudo cp /opt/mean/nginx.conf /etc/nginx/sites-available/mean-app
 sudo ln -s /etc/nginx/sites-available/mean-app /etc/nginx/sites-enabled/mean-app
-sudo cp /opt/mean/mean-upstream.conf /etc/nginx/conf.d/mean-upstream.conf
+sudo cp /opt/mean/mean-upstream.conf /etc/nginx/snippets/mean-upstream.conf
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t
 sudo systemctl restart nginx
