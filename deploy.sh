@@ -7,9 +7,9 @@ UPSTREAM_FILE="/etc/nginx/conf.d/mean-upstream.conf"
 
 compose() {
   if command -v docker-compose >/dev/null 2>&1; then
-    sudo docker-compose "$@"
+    sudo -E docker-compose "$@"
   else
-    sudo docker compose "$@"
+    sudo -E docker compose "$@"
   fi
 }
 
