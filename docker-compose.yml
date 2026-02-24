@@ -8,6 +8,11 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   backend:
     image: guptalakshya/dd-backend:latest
@@ -20,6 +25,11 @@ services:
       - MONGODB_URL=mongodb://mongo:27017/dd_db
     depends_on:
       - mongo
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   frontend:
     image: guptalakshya/dd-frontend:latest
@@ -30,6 +40,11 @@ services:
       - "4200:80"
     depends_on:
       - backend
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   mongo_data:
